@@ -97,6 +97,12 @@ By Devon Govett
 
         PDFPage.prototype.end = function() {
             this.dictionary.end();
+            this.resources.data.ColorSpace = {};
+            var i = 1;
+            for (var item in this.document.spotColors) {
+                item = this.document.spotColors[item];
+                this.resources.data.ColorSpace[`CS${i++}`] = `${item.id} 0 R`;
+            };
             this.resources.end();
             return this.content.end();
         };

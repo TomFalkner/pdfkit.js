@@ -5,6 +5,8 @@
     ref = require('../gradient'), PDFGradient = ref.PDFGradient, PDFLinearGradient = ref.PDFLinearGradient, PDFRadialGradient = ref.PDFRadialGradient;
 
     module.exports = {
+        spotColors: {},
+        spotColorsCount: 0,
         initColor: function() {
             this._opacityRegistry = {};
             this._opacityCount = 0;
@@ -49,6 +51,8 @@
                     })();
                 }
                 return color;
+            } else if (this.spotColors[color]) {
+                return color;
             }
             return null;
         },
@@ -62,6 +66,9 @@
             if (color instanceof PDFGradient) {
                 this._setColorSpace('Pattern', stroke);
                 color.apply(op);
+            } else if (typeof color === 'string') {
+                this.addContent(`/CS${this.spotColors[color].index} ${stroke ? 'CS' : 'cs'} 1 ${op}`);
+                return false;
             } else {
                 space = color.length === 4 ? 'DeviceCMYK' : 'DeviceRGB';
                 this._setColorSpace(space, stroke);
@@ -142,6 +149,27 @@
         },
         radialGradient: function(x1, y1, r1, x2, y2, r2) {
             return new PDFRadialGradient(this, x1, y1, r1, x2, y2, r2);
+        },
+        addSpotColor: function(name, C, M, Y, K) {
+            this._offsets.push(this._offset);
+            this.spotColors[name] = {
+                id: this._offsets.length,
+                index: ++this.spotColorsCount,
+                name: name,
+                values: [C, M, Y, K],
+            };
+        },
+        _putSpotColors: function() {
+            for (var item in this.spotColors) {
+                let output = '';
+                item = this.spotColors[item];
+                output += `${item.id} 0 obj \n`;
+                output += `[/Separation /${item.name} /DeviceCMYK << /Range [0 1 0 1 0 1 0 1] /C0 [0 0 0 0] /C1 [${
+                    item.values.map(value=>value/100.0).join(' ')
+                }]  /FunctionType 2 /Domain [0 1] /N 1>>]`;
+                output += `\nendobj`;
+                this._write(output);
+            };
         }
     };
 

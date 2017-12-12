@@ -221,6 +221,7 @@ By Devon Govett
         PDFDocument.prototype._finalize = function(fn) {
             var i, len, offset, ref1, xRefOffset;
             xRefOffset = this._offset;
+            this._putSpotColors();
             this._write("xref");
             this._write("0 " + (this._offsets.length + 1));
             this._write("0000000000 65535 f ");

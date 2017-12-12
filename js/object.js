@@ -48,7 +48,7 @@ By Devon Govett
         PDFObject.convert = function(object) {
             var e, i, isUnicode, items, j, key, out, ref, string, val;
             if (typeof object === 'string') {
-                return '/' + object;
+                return /^[\/\[\(\d].*/.test(object) ? object : '/' + object;
             } else if (object instanceof String) {
                 string = object;
                 isUnicode = false;
