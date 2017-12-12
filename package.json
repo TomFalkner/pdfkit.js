@@ -16,10 +16,7 @@
     "email": "devongovett@gmail.com",
     "url": "http://badassjs.com/"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/sajjad-shirazy/pdfkit"
-  },
+  "repository": "https://github.com/sajjad-shirazy/pdfkit",
   "bugs": "http://github.com/devongovett/pdfkit/issues",
   "devDependencies": {
     "blob-stream": "^0.1.2",
