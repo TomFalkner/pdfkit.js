@@ -2,9 +2,9 @@
 (function() {
     var PNG, PNGImage, zlib;
 
-    zlib = require("zlib");
+    zlib = require('zlib');
 
-    PNG = require("png-js");
+    PNG = require('png-js');
 
     PNGImage = (function() {
         function PNGImage(data, label) {
@@ -23,12 +23,12 @@
                 return;
             }
             this.obj = this.document.ref({
-                Type: "XObject",
-                Subtype: "Image",
+                Type: 'XObject',
+                Subtype: 'Image',
                 BitsPerComponent: this.image.bits,
                 Width: this.width,
                 Height: this.height,
-                Filter: "FlateDecode"
+                Filter: 'FlateDecode'
             });
             if (!this.image.hasAlphaChannel) {
                 params = this.document.ref({
@@ -37,24 +37,19 @@
                     BitsPerComponent: this.image.bits,
                     Columns: this.width
                 });
-                this.obj.data["DecodeParms"] = params;
+                this.obj.data['DecodeParms'] = params;
                 params.end();
             }
             if (this.image.palette.length === 0) {
-                this.obj.data["ColorSpace"] = this.image.colorSpace;
+                this.obj.data['ColorSpace'] = this.image.colorSpace;
             } else {
                 palette = this.document.ref();
                 palette.end(new Buffer(this.image.palette));
-                this.obj.data["ColorSpace"] = [
-                    "Indexed",
-                    "DeviceRGB",
-                    this.image.palette.length / 3 - 1,
-                    palette
-                ];
+                this.obj.data['ColorSpace'] = ['Indexed', 'DeviceRGB', (this.image.palette.length / 3) - 1, palette];
             }
             if (this.image.transparency.grayscale) {
                 val = this.image.transparency.greyscale;
-                return (this.obj.data["Mask"] = [val, val]);
+                return this.obj.data['Mask'] = [val, val];
             } else if (this.image.transparency.rgb) {
                 rgb = this.image.transparency.rgb;
                 mask = [];
@@ -62,7 +57,7 @@
                     x = rgb[k];
                     mask.push(x, x);
                 }
-                return (this.obj.data["Mask"] = mask);
+                return this.obj.data['Mask'] = mask;
             } else if (this.image.transparency.indexed) {
                 return this.loadIndexedAlphaChannel();
             } else if (this.image.hasAlphaChannel) {
@@ -76,98 +71,88 @@
             var sMask;
             if (this.alphaChannel) {
                 sMask = this.document.ref({
-                    Type: "XObject",
-                    Subtype: "Image",
+                    Type: 'XObject',
+                    Subtype: 'Image',
                     Height: this.height,
                     Width: this.width,
                     BitsPerComponent: 8,
-                    Filter: "FlateDecode",
-                    ColorSpace: "DeviceGray",
+                    Filter: 'FlateDecode',
+                    ColorSpace: 'DeviceGray',
                     Decode: [0, 1]
                 });
                 sMask.end(this.alphaChannel);
-                this.obj.data["SMask"] = sMask;
+                this.obj.data['SMask'] = sMask;
             }
             this.obj.end(this.imgData);
             this.image = null;
-            return (this.imgData = null);
+            return this.imgData = null;
         };
 
         PNGImage.prototype.splitAlphaChannel = function() {
-            return this.image.decodePixels(
-                (function(_this) {
-                    return function(pixels) {
-                        var a,
-                            alphaChannel,
-                            colorByteSize,
-                            done,
-                            i,
-                            imgData,
-                            len,
-                            p,
-                            pixelCount;
-                        colorByteSize = _this.image.colors * _this.image.bits / 8;
-                        pixelCount = _this.width * _this.height;
-                        imgData = new Buffer(pixelCount * colorByteSize);
-                        alphaChannel = new Buffer(pixelCount);
-                        i = p = a = 0;
-                        len = pixels.length;
-                        while (i < len) {
-                            imgData[p++] = pixels[i++];
-                            imgData[p++] = pixels[i++];
-                            imgData[p++] = pixels[i++];
-                            alphaChannel[a++] = pixels[i++];
+            return this.image.decodePixels((function(_this) {
+                return function(pixels) {
+                    var a, alphaChannel, colorByteSize, done, i, imgData, len, p, pixelCount;
+                    colorByteSize = _this.image.colors * _this.image.bits / 8;
+                    pixelCount = _this.width * _this.height;
+                    imgData = new Buffer(pixelCount * colorByteSize);
+                    alphaChannel = new Buffer(pixelCount);
+                    i = p = a = 0;
+                    len = pixels.length;
+                    while (i < len) {
+                        imgData[p++] = pixels[i++];
+                        imgData[p++] = pixels[i++];
+                        imgData[p++] = pixels[i++];
+                        alphaChannel[a++] = pixels[i++];
+                    }
+                    done = 0;
+                    zlib.deflate(imgData, function(err, imgData1) {
+                        _this.imgData = imgData1;
+                        if (err) {
+                            throw err;
                         }
-                        done = 0;
-                        zlib.deflate(imgData, function(err, imgData1) {
-                            _this.imgData = imgData1;
-                            if (err) {
-                                throw err;
-                            }
-                            if (++done === 2) {
-                                return _this.finalize();
-                            }
-                        });
-                        return zlib.deflate(alphaChannel, function(err, alphaChannel1) {
-                            _this.alphaChannel = alphaChannel1;
-                            if (err) {
-                                throw err;
-                            }
-                            if (++done === 2) {
-                                return _this.finalize();
-                            }
-                        });
-                    };
-                })(this)
-            );
+                        if (++done === 2) {
+                            return _this.finalize();
+                        }
+                    });
+                    return zlib.deflate(alphaChannel, function(err, alphaChannel1) {
+                        _this.alphaChannel = alphaChannel1;
+                        if (err) {
+                            throw err;
+                        }
+                        if (++done === 2) {
+                            return _this.finalize();
+                        }
+                    });
+                };
+            })(this));
         };
 
         PNGImage.prototype.loadIndexedAlphaChannel = function(fn) {
             var transparency;
             transparency = this.image.transparency.indexed;
-            return this.image.decodePixels(
-                (function(_this) {
-                    return function(pixels) {
-                        var alphaChannel, i, j, k, ref;
-                        alphaChannel = new Buffer(_this.width * _this.height);
-                        i = 0;
-                        for (j = k = 0, ref = pixels.length; k < ref; j = k += 1) {
-                            alphaChannel[i++] = transparency[pixels[j]];
+            return this.image.decodePixels((function(_this) {
+                return function(pixels) {
+                    var alphaChannel, i, j, k, ref;
+                    alphaChannel = new Buffer(_this.width * _this.height);
+                    i = 0;
+                    for (j = k = 0, ref = pixels.length; k < ref; j = k += 1) {
+                        alphaChannel[i++] = transparency[pixels[j]];
+                    }
+                    return zlib.deflate(alphaChannel, function(err, alphaChannel1) {
+                        _this.alphaChannel = alphaChannel1;
+                        if (err) {
+                            throw err;
                         }
-                        return zlib.deflate(alphaChannel, function(err, alphaChannel1) {
-                            _this.alphaChannel = alphaChannel1;
-                            if (err) {
-                                throw err;
-                            }
-                            return _this.finalize();
-                        });
-                    };
-                })(this)
-            );
+                        return _this.finalize();
+                    });
+                };
+            })(this));
         };
 
         return PNGImage;
+
     })();
 
     module.exports = PNGImage;
-}.call(this));
+
+}).call(this);

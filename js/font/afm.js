@@ -2,13 +2,13 @@
 (function() {
     var AFMFont, fs;
 
-    fs = require("fs");
+    fs = require('fs');
 
     AFMFont = (function() {
         var WIN_ANSI_MAP, characters;
 
         AFMFont.open = function(filename) {
-            return new AFMFont(fs.readFileSync(filename, "utf8"));
+            return new AFMFont(fs.readFileSync(filename, 'utf8'));
         };
 
         function AFMFont(contents) {
@@ -19,49 +19,48 @@
             this.boundingBoxes = {};
             this.kernPairs = {};
             this.parse();
-            this.charWidths = function() {
+            this.charWidths = (function() {
                 var j, results;
                 results = [];
                 for (i = j = 0; j <= 255; i = ++j) {
                     results.push(this.glyphWidths[characters[i]]);
                 }
                 return results;
-            }.call(this);
-            this.bbox = function() {
+            }).call(this);
+            this.bbox = (function() {
                 var j, len, ref, results;
-                ref = this.attributes["FontBBox"].split(/\s+/);
+                ref = this.attributes['FontBBox'].split(/\s+/);
                 results = [];
                 for (j = 0, len = ref.length; j < len; j++) {
                     e = ref[j];
                     results.push(+e);
                 }
                 return results;
-            }.call(this);
-            this.ascender = +(this.attributes["Ascender"] || 0);
-            this.descender = +(this.attributes["Descender"] || 0);
-            this.lineGap =
-                this.bbox[3] - this.bbox[1] - (this.ascender - this.descender);
+            }).call(this);
+            this.ascender = +(this.attributes['Ascender'] || 0);
+            this.descender = +(this.attributes['Descender'] || 0);
+            this.lineGap = (this.bbox[3] - this.bbox[1]) - (this.ascender - this.descender);
         }
 
         AFMFont.prototype.parse = function() {
             var a, j, key, len, line, match, name, ref, section, value;
-            section = "";
-            ref = this.contents.split("\n");
+            section = '';
+            ref = this.contents.split('\n');
             for (j = 0, len = ref.length; j < len; j++) {
                 line = ref[j];
-                if ((match = line.match(/^Start(\w+)/))) {
+                if (match = line.match(/^Start(\w+)/)) {
                     section = match[1];
                     continue;
-                } else if ((match = line.match(/^End(\w+)/))) {
-                    section = "";
+                } else if (match = line.match(/^End(\w+)/)) {
+                    section = '';
                     continue;
                 }
                 switch (section) {
-                    case "FontMetrics":
+                    case 'FontMetrics':
                         match = line.match(/(^\w+)\s+(.*)/);
                         key = match[1];
                         value = match[2];
-                        if ((a = this.attributes[key])) {
+                        if (a = this.attributes[key]) {
                             if (!Array.isArray(a)) {
                                 a = this.attributes[key] = [a];
                             }
@@ -70,17 +69,17 @@
                             this.attributes[key] = value;
                         }
                         break;
-                    case "CharMetrics":
+                    case 'CharMetrics':
                         if (!/^CH?\s/.test(line)) {
                             continue;
                         }
                         name = line.match(/\bN\s+(\.?\w+)\s*;/)[1];
                         this.glyphWidths[name] = +line.match(/\bWX\s+(\d+)\s*;/)[1];
                         break;
-                    case "KernPairs":
+                    case 'KernPairs':
                         match = line.match(/^KPX\s+(\.?\w+)\s+(\.?\w+)\s+(-?\d+)/);
                         if (match) {
-                            this.kernPairs[match[1] + "\0" + match[2]] = parseInt(match[3]);
+                            this.kernPairs[match[1] + '\0' + match[2]] = parseInt(match[3]);
                         }
                 }
             }
@@ -119,9 +118,7 @@
         AFMFont.prototype.encodeText = function(text) {
             var char, i, j, ref, res;
             res = [];
-            for (
-                i = j = 0, ref = text.length; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j
-            ) {
+            for (i = j = 0, ref = text.length; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
                 char = text.charCodeAt(i);
                 char = WIN_ANSI_MAP[char] || char;
                 res.push(char.toString(16));
@@ -132,9 +129,7 @@
         AFMFont.prototype.glyphsForString = function(string) {
             var charCode, glyphs, i, j, ref;
             glyphs = [];
-            for (
-                i = j = 0, ref = string.length; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j
-            ) {
+            for (i = j = 0, ref = string.length; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
                 charCode = string.charCodeAt(i);
                 glyphs.push(this.characterToGlyph(charCode));
             }
@@ -142,7 +137,7 @@
         };
 
         AFMFont.prototype.characterToGlyph = function(character) {
-            return characters[WIN_ANSI_MAP[character] || character] || ".notdef";
+            return characters[WIN_ANSI_MAP[character] || character] || '.notdef';
         };
 
         AFMFont.prototype.widthOfGlyph = function(glyph) {
@@ -150,7 +145,7 @@
         };
 
         AFMFont.prototype.getKernPair = function(left, right) {
-            return this.kernPairs[left + "\0" + right] || 0;
+            return this.kernPairs[left + '\0' + right] || 0;
         };
 
         AFMFont.prototype.advancesForGlyphs = function(glyphs) {
@@ -164,12 +159,12 @@
             return advances;
         };
 
-        characters = ".notdef       .notdef        .notdef        .notdef\n.notdef       .notdef        .notdef        .notdef\n.notdef       .notdef        .notdef        .notdef\n.notdef       .notdef        .notdef        .notdef\n.notdef       .notdef        .notdef        .notdef\n.notdef       .notdef        .notdef        .notdef\n.notdef       .notdef        .notdef        .notdef\n.notdef       .notdef        .notdef        .notdef\n\nspace         exclam         quotedbl       numbersign\ndollar        percent        ampersand      quotesingle\nparenleft     parenright     asterisk       plus\ncomma         hyphen         period         slash\nzero          one            two            three\nfour          five           six            seven\neight         nine           colon          semicolon\nless          equal          greater        question\n\nat            A              B              C\nD             E              F              G\nH             I              J              K\nL             M              N              O\nP             Q              R              S\nT             U              V              W\nX             Y              Z              bracketleft\nbackslash     bracketright   asciicircum    underscore\n\ngrave         a              b              c\nd             e              f              g\nh             i              j              k\nl             m              n              o\np             q              r              s\nt             u              v              w\nx             y              z              braceleft\nbar           braceright     asciitilde     .notdef\n\nEuro          .notdef        quotesinglbase florin\nquotedblbase  ellipsis       dagger         daggerdbl\ncircumflex    perthousand    Scaron         guilsinglleft\nOE            .notdef        Zcaron         .notdef\n.notdef       quoteleft      quoteright     quotedblleft\nquotedblright bullet         endash         emdash\ntilde         trademark      scaron         guilsinglright\noe            .notdef        zcaron         ydieresis\n\nspace         exclamdown     cent           sterling\ncurrency      yen            brokenbar      section\ndieresis      copyright      ordfeminine    guillemotleft\nlogicalnot    hyphen         registered     macron\ndegree        plusminus      twosuperior    threesuperior\nacute         mu             paragraph      periodcentered\ncedilla       onesuperior    ordmasculine   guillemotright\nonequarter    onehalf        threequarters  questiondown\n\nAgrave        Aacute         Acircumflex    Atilde\nAdieresis     Aring          AE             Ccedilla\nEgrave        Eacute         Ecircumflex    Edieresis\nIgrave        Iacute         Icircumflex    Idieresis\nEth           Ntilde         Ograve         Oacute\nOcircumflex   Otilde         Odieresis      multiply\nOslash        Ugrave         Uacute         Ucircumflex\nUdieresis     Yacute         Thorn          germandbls\n\nagrave        aacute         acircumflex    atilde\nadieresis     aring          ae             ccedilla\negrave        eacute         ecircumflex    edieresis\nigrave        iacute         icircumflex    idieresis\neth           ntilde         ograve         oacute\nocircumflex   otilde         odieresis      divide\noslash        ugrave         uacute         ucircumflex\nudieresis     yacute         thorn          ydieresis".split(
-            /\s+/
-        );
+        characters = '.notdef       .notdef        .notdef        .notdef\n.notdef       .notdef        .notdef        .notdef\n.notdef       .notdef        .notdef        .notdef\n.notdef       .notdef        .notdef        .notdef\n.notdef       .notdef        .notdef        .notdef\n.notdef       .notdef        .notdef        .notdef\n.notdef       .notdef        .notdef        .notdef\n.notdef       .notdef        .notdef        .notdef\n\nspace         exclam         quotedbl       numbersign\ndollar        percent        ampersand      quotesingle\nparenleft     parenright     asterisk       plus\ncomma         hyphen         period         slash\nzero          one            two            three\nfour          five           six            seven\neight         nine           colon          semicolon\nless          equal          greater        question\n\nat            A              B              C\nD             E              F              G\nH             I              J              K\nL             M              N              O\nP             Q              R              S\nT             U              V              W\nX             Y              Z              bracketleft\nbackslash     bracketright   asciicircum    underscore\n\ngrave         a              b              c\nd             e              f              g\nh             i              j              k\nl             m              n              o\np             q              r              s\nt             u              v              w\nx             y              z              braceleft\nbar           braceright     asciitilde     .notdef\n\nEuro          .notdef        quotesinglbase florin\nquotedblbase  ellipsis       dagger         daggerdbl\ncircumflex    perthousand    Scaron         guilsinglleft\nOE            .notdef        Zcaron         .notdef\n.notdef       quoteleft      quoteright     quotedblleft\nquotedblright bullet         endash         emdash\ntilde         trademark      scaron         guilsinglright\noe            .notdef        zcaron         ydieresis\n\nspace         exclamdown     cent           sterling\ncurrency      yen            brokenbar      section\ndieresis      copyright      ordfeminine    guillemotleft\nlogicalnot    hyphen         registered     macron\ndegree        plusminus      twosuperior    threesuperior\nacute         mu             paragraph      periodcentered\ncedilla       onesuperior    ordmasculine   guillemotright\nonequarter    onehalf        threequarters  questiondown\n\nAgrave        Aacute         Acircumflex    Atilde\nAdieresis     Aring          AE             Ccedilla\nEgrave        Eacute         Ecircumflex    Edieresis\nIgrave        Iacute         Icircumflex    Idieresis\nEth           Ntilde         Ograve         Oacute\nOcircumflex   Otilde         Odieresis      multiply\nOslash        Ugrave         Uacute         Ucircumflex\nUdieresis     Yacute         Thorn          germandbls\n\nagrave        aacute         acircumflex    atilde\nadieresis     aring          ae             ccedilla\negrave        eacute         ecircumflex    edieresis\nigrave        iacute         icircumflex    idieresis\neth           ntilde         ograve         oacute\nocircumflex   otilde         odieresis      divide\noslash        ugrave         uacute         ucircumflex\nudieresis     yacute         thorn          ydieresis'.split(/\s+/);
 
         return AFMFont;
+
     })();
 
     module.exports = AFMFont;
-}.call(this));
+
+}).call(this);
