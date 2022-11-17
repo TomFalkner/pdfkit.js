@@ -164,7 +164,7 @@
                 let output = '';
                 item = this.spotColors[item];
                 output += `${item.id} 0 obj \n`;
-                output += `[/Separation /${item.name} /DeviceCMYK << /Range [0 1 0 1 0 1 0 1] /C0 [0 0 0 0] /C1 [${
+                output += `[/Separation /${item.name.replace(/\s/g, '#20')} /DeviceCMYK << /Range [0 1 0 1 0 1 0 1] /C0 [0 0 0 0] /C1 [${
                     item.values.map(value=>value/100.0).join(' ')
                 }]  /FunctionType 2 /Domain [0 1] /N 1>>]`;
                 output += `\nendobj`;
